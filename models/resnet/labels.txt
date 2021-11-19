@@ -1,0 +1,4 @@
+corona
+external
+internal
+noise
