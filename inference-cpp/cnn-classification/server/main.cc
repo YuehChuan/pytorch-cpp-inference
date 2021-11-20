@@ -3,7 +3,7 @@
 #include "base64.h"
 #include "json11.hpp"
 #include "assert.h"
-int PORT = 8181;
+int PORT = 8180;
 
 //./predict geeks.png ../../models/resnet/pds_cpu.pth ../../models/resnet/labels.txt false
 //./predict ../../../models/resnet/pds_cpu.pth ../../../models/resnet/labels.txt false
@@ -157,7 +157,8 @@ int main(int argc, char **argv) {
 
     public:
         int ch;
-        std::vector<std::string> base64Pattern;
+        //std::vector<std::string> base64Pattern;
+        std::string base64Pattern[12];
         Pattern () {}
     };
 
@@ -169,22 +170,46 @@ int main(int argc, char **argv) {
 
 
                 try {
+
                     // https://crowcpp.org/reference/classcrow_1_1json_1_1rvalue.html#a2b938dacf1809bb38add4ac8bbeb46ed
                     //https://github.com/dropbox/json11/issues/84
                     //https://github.com/dropbox/json11/issues/106
+                    //https://stackoverflow.com/questions/12702561/iterate-through-a-c-vector-using-a-for-loop
+                    //https://stackoverflow.com/questions/14373934/iterator-loop-vs-index-loop
                     std::string input_error;
                     auto args= json11::Json::parse(req.body, input_error);
                     if(args == nullptr)
                         crow::response(400);
 
-                    //std::vector<std::string> pattern;
                     std::vector<std::string>base64RawList;
+                    std::vector<Pattern> PRPDArrays;
 
+/*
+                    std::vector<json11::Json> v;
+                    v=args["JSONAiInputs"].array_items();
 
-                    //v =args["JSONAiInputs"].array_items();
-                    //std::cout<<"v size";
-                    //std::cout<<v.size();
+                    for (std::size_t i = 0; i != v.size(); ++i) {
+                        int ch = v[i]["ch"].int_value();
+                        std::cout << ch << std::endl;
+                        Pattern P;
+                        P.ch=ch;
+                        auto k=v[i]["PRPDArrays"].array_items();
+                        P.base64Pattern.push_back(k.dump());
+                    }
+*/
 
+                    std::vector<json11::Json> v;
+                    v=args["JSONAiInputs"].array_items();
+                    /*get channel*/
+                    for (std::size_t i = 0; i != v.size(); ++i) {
+                        int ch = v[i]["ch"].int_value();
+                        std::cout << ch << std::endl;
+                        Pattern P;
+                        P.ch=ch;
+                        PRPDArrays.push_back(P);
+                    }
+
+                    /*get all patterns*/
                     for(auto& j: args["JSONAiInputs"].array_items()) {
                         for(auto& k: j["PRPDArrays"].array_items()){
                             //auto val = k.string_value(); // It can be int_value(), number_value() too.
@@ -193,11 +218,48 @@ int main(int argc, char **argv) {
                     }
 
 
+                    //for(int i = 0; i < base64RawList.size(); i++)
+                    //{
+                    //    std::cout << base64RawList[i] << std::endl;
+                    //}
+                    int n=base64RawList.size();
+                    std::cout<< n ;
+                    assert( (n%12)==0);
 
-                    for(int i = 0; i < base64RawList.size(); i++)
+
+                    int k=0; int j=0;
+                    for(int i = n - 1; i >= 0; i--) //notice vector elements order related to send Time
                     {
-                        std::cout << base64RawList[i] << std::endl;
+                        if(i==n-1)//i==23
+                        {
+                            PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
+                            j++;
+                            continue;
+                        }
+                        
+                        if( ( (i+1)%12 )!=0)
+                        {
+                            PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
+                            j++;
+                        }
+                        else
+                        {
+                            k++;
+                            PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
+                            j++;
+                        }
+
                     }
+
+                    for(int i = 0; i < PRPDArrays.size(); i++)
+                    {
+                        for (std::size_t j = 0; j != 12; j++) {
+                            std::string ss=PRPDArrays[i].base64Pattern[j];
+                            std::cout<<(ss)<< std::endl;;
+                        }
+                    }
+
+
 
                     std::vector<Point> points = { { 1, 2 }, { 10, 20 }, { 100, 200 } };
                     std::string points_json = json11::Json(points).dump();
