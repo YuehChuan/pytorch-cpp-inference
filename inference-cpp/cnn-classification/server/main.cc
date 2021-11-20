@@ -2,6 +2,7 @@
 #include "crow_all.h"
 #include "base64.h"
 #include "json11.hpp"
+#include "assert.h"
 int PORT = 8181;
 
 //./predict geeks.png ../../models/resnet/pds_cpu.pth ../../models/resnet/labels.txt false
@@ -88,7 +89,6 @@ int main(int argc, char **argv) {
   });
 
 
-//https://github.com/ipkn/crow/blob/master/examples/example.cpp#L144
     CROW_ROUTE(app, "/Analysis/By/P").methods("POST"_method, "GET"_method)
             ([&image_height, &image_width,
                      &mean, &std, &labels, &model, &usegpu](const crow::request& req){
@@ -107,13 +107,12 @@ int main(int argc, char **argv) {
                     if(args == nullptr)
                         crow::response(400);
 
-                    std::string base64_image = args["image"].string_value();
-
                     std::vector<std::string> inp;
                     for(auto& j: args["PRPDArrays"].array_items()) {
                         auto val = j.string_value(); // It can be int_value(), number_value() too.
                         inp.push_back(j.dump());
                     }
+
 
                     for(int i = 0; i < inp.size(); i++)
                     {
@@ -121,8 +120,7 @@ int main(int argc, char **argv) {
                     }
 
 
-
-
+                    std::string base64_image = inp[1];
                     //std::string base64_image = args["image"].s();
                     std::string decoded_image = base64_decode(base64_image);
                     std::vector<uchar> image_data(decoded_image.begin(), decoded_image.end());
@@ -147,6 +145,81 @@ int main(int argc, char **argv) {
             });
 
 
+    class Point {
+    public:
+        int x;
+        int y;
+        Point (int x, int y) : x(x), y(y) {}
+        json11::Json to_json() const { return json11::Json::array { x, y }; }
+    };
+
+    class Pattern {
+
+    public:
+        int ch;
+        std::vector<std::string> base64Pattern;
+        Pattern () {}
+    };
+
+
+    CROW_ROUTE(app, "/jsonPost").methods("POST"_method, "GET"_method)
+            ([&image_height, &image_width,
+                     &mean, &std, &labels, &model, &usegpu](const crow::request& req){
+                std::ostringstream os;
+
+
+                try {
+                    // https://crowcpp.org/reference/classcrow_1_1json_1_1rvalue.html#a2b938dacf1809bb38add4ac8bbeb46ed
+                    //https://github.com/dropbox/json11/issues/84
+                    //https://github.com/dropbox/json11/issues/106
+                    std::string input_error;
+                    auto args= json11::Json::parse(req.body, input_error);
+                    if(args == nullptr)
+                        crow::response(400);
+
+                    //std::vector<std::string> pattern;
+                    std::vector<std::string>base64RawList;
+
+
+                    //v =args["JSONAiInputs"].array_items();
+                    //std::cout<<"v size";
+                    //std::cout<<v.size();
+
+                    for(auto& j: args["JSONAiInputs"].array_items()) {
+                        for(auto& k: j["PRPDArrays"].array_items()){
+                            //auto val = k.string_value(); // It can be int_value(), number_value() too.
+                            base64RawList.push_back(k.dump());
+                        }
+                    }
+
+
+
+                    for(int i = 0; i < base64RawList.size(); i++)
+                    {
+                        std::cout << base64RawList[i] << std::endl;
+                    }
+
+                    std::vector<Point> points = { { 1, 2 }, { 10, 20 }, { 100, 200 } };
+                    std::string points_json = json11::Json(points).dump();
+                    return crow::response(points_json);
+
+
+                } catch (std::exception& e){
+
+                    std::vector<Point> points = { { 1, 2 }, { 10, 20 }, { 100, 200 } };
+                    std::string points_json = json11::Json(points).dump();
+                    return crow::response(points_json);
+                }
+
+            });
+
+
+
+
+
   app.port(PORT).run();
   return 0;
 }
+
+
+
