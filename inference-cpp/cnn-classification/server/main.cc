@@ -272,7 +272,7 @@ int main(int argc, char **argv) {
                     {
                         if(i==n-1)//i==23
                         {
-                            PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
+                            //PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
                             PRPDArrays[k].imageList[j%12]=imageRawList[i];
                             j++;
                             continue;
@@ -280,14 +280,14 @@ int main(int argc, char **argv) {
 
                         if( ( (i+1)%12 )!=0)
                         {
-                            PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
+                            //PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
                             PRPDArrays[k].imageList[j%12]=imageRawList[i];
                             j++;
                         }
                         else
                         {
                             k++;
-                            PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
+                            //PRPDArrays[k].base64Pattern[j%12]=base64RawList[i];
                             PRPDArrays[k].imageList[j%12]=imageRawList[i];
                             j++;
                         }
@@ -298,9 +298,9 @@ int main(int argc, char **argv) {
                     {
                         std::vector<cv::Mat> matArray;
                         for (std::size_t j = 0; j != 12; j++) {
-                            std::string ss=PRPDArrays[i].base64Pattern[j];
+                           // std::string ss=PRPDArrays[i].base64Pattern[j];
                             matArray.push_back( PRPDArrays[i].imageList[j] );
-                            std::cout<<(ss)<< std::endl;;
+                           // std::cout<<(ss)<< std::endl;;
                         }
                         cv::hconcat( matArray, PRPDArrays[i].scrollImage );
                         // Predict
